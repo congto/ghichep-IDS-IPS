@@ -35,7 +35,8 @@
 - Cài đặt các gói bổ trợ
 
     ```sh 
-    sudo apt-get install -y build-essential libpcap-dev libpcre3-dev libdumbnet-dev bison flex zlib1g-dev liblzma-dev openssl libssl-dev ethtool
+    sudo apt-get install -y build-essential libpcap-dev libpcre3-dev \
+        libdumbnet-dev bison flex zlib1g-dev liblzma-dev openssl libssl-dev ethtool tree
     ```
 
 #### Cấu hình interface 
@@ -173,7 +174,7 @@
     sudo useradd snort -r -s /sbin/nologin -c SNORT_IDS -g snort
     ```
 
-- Tạo các thư mục cho snort
+### Tạo các thư mục cho snort
 
     ```sh
     # Create the Snort directories:
@@ -207,4 +208,142 @@
     sudo chown -R snort:snort /usr/local/lib/snort_dynamicrules
     ```
 
+- Copy các file vào thư mục `/etc/snort` vừa tạo ở bên trên
+
+    ```sh
+    cd ~/snort_src/snort-2.9.8.3/etc/
+    sudo cp *.conf* /etc/snort
+    sudo cp *.map /etc/snort
+    sudo cp *.dtd /etc/snort
+     
+    cd ~/snort_src/snort-2.9.8.3/src/dynamic-preprocessors/build/usr/local/lib/snort_dynamicpreprocessor/
+    sudo cp * /usr/local/lib/snort_dynamicpreprocessor/
+    ```
+
+- Kiểm tra các file vừa copy vào `/etc/snort`
+
+    ```sh
+    root@uvdc:~# tree /etc/snort/
+    /etc/snort/
+    ├── attribute_table.dtd
+    ├── classification.config
+    ├── file_magic.conf
+    ├── gen-msg.map
+    ├── preproc_rules
+    ├── reference.config
+    ├── rules
+    │   ├── iplists
+    │   │   ├── black_list.rules
+    │   │   └── white_list.rules
+    │   └── local.rules
+    ├── sid-msg.map
+    ├── snort.conf
+    ├── so_rules
+    ├── threshold.conf
+    └── unicode.map
+
+    4 directories, 12 files
+    ```
+
+### Sửa file `/etc/snort/snort.conf`
+
+- Sao lưu file `/etc/snort/snort.conf`
+    
+    ```sh
+    cp /etc/snort/snort.conf /etc/snort/snort.conf.orig
+    ```
+    
+- Bỏ comment các dòng từ 547 tới 651 (các dòng bắt đầu là `include $RULE_PATH`) bằng lệnh dưới.
+    
+    ```sh
+    sudo sed -i 's/include \$RULE\_PATH/#include \$RULE\_PATH/' /etc/snort/snort.conf
+    ```
+  
+- Sửa file `/etc/snort/snort.conf` bằng lệnh vi
+
+    ```sh
+    sudo vi /etc/snort/snort.conf
+    ```
+
+    - Sửa dòng 45 `ipvar HOME_NET any` như sau (IP của dải internal):
+
+        ```sh
+        ipvar HOME_NET 10.10.10.0/24
+        ```
+    - Sửa dòng 48 `ipvar EXTERNAL_NET any` như sau (IP của dải external)
+    
+        ```sh
+        ipvar EXTERNAL_NET any
+        ```
+    - Sửa các dòng dưới như sau
+    
+        ```sh
+        var RULE_PATH /etc/snort/rules                      # line 104
+        var SO_RULE_PATH /etc/snort/so_rules                # line 105
+        var PREPROC_RULE_PATH /etc/snort/preproc_rules      # line 106
+
+        var WHITE_LIST_PATH /etc/snort/rules/iplists        # line 113
+        var BLACK_LIST_PATH /etc/snort/rules/iplists        # line 114
+        ```
+
+    - Nếu muốn include các rule trong `/etc/snort/rules/local.rules` thì bỏ comment dòng 545, thành như sau:    
+    
+    ```sh
+    include $RULE_PATH/local.rules
+    ```
+
+### Kiểm tra lại cấu hình của snort sau khi sửa
+
+- Thưc thi lệnh dưới
+
+    ```sh
+    sudo snort -T -c /etc/snort/snort.conf -i eth0
+    ```
+    
+    - Trong đó:    
+    
+        - `-T`: là chế độ test.
+        - `-c`: chỉ ra đường dẫn file cấu hình.
+        - `-i`: Interface mà snort sẽ lắng nghe.
+
+- Kết quả như dưới là OK
+
+    ```sh
+    Acquiring network traffic from "eth0".
+
+            --== Initialization Complete ==--
+
+       ,,_     -*> Snort! <*-
+      o"  )~   Version 2.9.8.3 GRE (Build 383)
+       ''''    By Martin Roesch & The Snort Team: http://www.snort.org/contact#team
+               Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+               Copyright (C) 1998-2013 Sourcefire, Inc., et al.
+               Using libpcap version 1.5.3
+               Using PCRE version: 8.31 2012-07-06
+               Using ZLIB version: 1.2.8
+
+               Rules Engine: SF_SNORT_DETECTION_ENGINE  Version 2.6  <Build 1>
+               Preprocessor Object: SF_IMAP  Version 1.0  <Build 1>
+               Preprocessor Object: SF_SSH  Version 1.1  <Build 3>
+               Preprocessor Object: SF_MODBUS  Version 1.1  <Build 1>
+               Preprocessor Object: SF_SIP  Version 1.1  <Build 1>
+               Preprocessor Object: SF_DNS  Version 1.1  <Build 4>
+               Preprocessor Object: SF_SDF  Version 1.1  <Build 1>
+               Preprocessor Object: SF_GTP  Version 1.1  <Build 1>
+               Preprocessor Object: SF_SSLPP  Version 1.1  <Build 4>
+               Preprocessor Object: SF_FTPTELNET  Version 1.2  <Build 13>
+               Preprocessor Object: SF_DCERPC2  Version 1.0  <Build 3>
+               Preprocessor Object: SF_SMTP  Version 1.1  <Build 9>
+               Preprocessor Object: SF_DNP3  Version 1.1  <Build 1>
+               Preprocessor Object: SF_REPUTATION  Version 1.1  <Build 1>
+               Preprocessor Object: SF_POP  Version 1.0  <Build 1>
+
+    Snort successfully validated the configuration!
+    Snort exiting
+
+    ```
+    
+## Tham khảo: 
+
+- http://sublimerobots.com/2015/12/snort-2-9-8-x-on-ubuntu-part-1/
 - 
