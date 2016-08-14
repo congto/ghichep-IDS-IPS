@@ -72,10 +72,10 @@
         post-up ethtool -K eth0 lro off
         ```
         
-- Khởi động lại máy chủ
+- Khởi động card mạng của máy chủ
 
     ```sh
-    init 6
+    ifdown -a && ifup -a
     ``` 
 
 - Xác nhận lại kết quả sau khi disbale GRO và LRO
@@ -118,9 +118,9 @@
 
     ```sh
     cd ~/snort_src
-    wget https://snort.org/downloads/snort/snort-2.9.8.0.tar.gz
-    tar -xvzf snort-2.9.8.0.tar.gz
-    cd snort-2.9.8.0
+    wget https://www.snort.org/downloads/snort/snort-2.9.8.3.tar.gz
+    tar -xvzf snort-2.9.8.3.tar.gz
+    cd snort-2.9.8.3
     ./configure --enable-sourcefire
     make
     sudo make install
@@ -147,7 +147,64 @@
     - Kết quả 
 
         ```ssh
+        root@uvdc:~/snort_src/snort-2.9.8.3# snort -V
 
+           ,,_     -*> Snort! <*-
+          o"  )~   Version 2.9.8.3 GRE (Build 383)
+           ''''    By Martin Roesch & The Snort Team: http://www.snort.org/contact#team
+                   Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+                   Copyright (C) 1998-2013 Sourcefire, Inc., et al.
+                   Using libpcap version 1.5.3
+                   Using PCRE version: 8.31 2012-07-06
+                   Using ZLIB version: 1.2.8
+
+        root@uvdc:~/snort_src/snort-2.9.8.3#
+        root@uvdc:~/snort_src/snort-2.9.8.3#
+        root@uvdc:~/snort_src/snort-2.9.8.3#
         ```
-        
+                
+## Cấu hình Snort với mode IDS
+
+### Tạo user `snort`
+- Vì lý do an toàn, tạo user `snort` với quyền user thường
+
+    ```sh
+    sudo groupadd snort
+    sudo useradd snort -r -s /sbin/nologin -c SNORT_IDS -g snort
+    ```
+
+- Tạo các thư mục cho snort
+
+    ```sh
+    # Create the Snort directories:
+    sudo mkdir /etc/snort
+    sudo mkdir /etc/snort/rules
+    sudo mkdir /etc/snort/rules/iplists
+    sudo mkdir /etc/snort/preproc_rules
+    sudo mkdir /usr/local/lib/snort_dynamicrules
+    sudo mkdir /etc/snort/so_rules
+     
+    # Create some files that stores rules and ip lists
+    sudo touch /etc/snort/rules/iplists/black_list.rules
+    sudo touch /etc/snort/rules/iplists/white_list.rules
+    sudo touch /etc/snort/rules/local.rules
+    sudo touch /etc/snort/sid-msg.map
+     
+    # Create our logging directories:
+    sudo mkdir /var/log/snort
+    sudo mkdir /var/log/snort/archived_logs
+     
+    # Adjust permissions:
+    sudo chmod -R 5775 /etc/snort
+    sudo chmod -R 5775 /var/log/snort
+    sudo chmod -R 5775 /var/log/snort/archived_logs
+    sudo chmod -R 5775 /etc/snort/so_rules
+    sudo chmod -R 5775 /usr/local/lib/snort_dynamicrules
+     
+    # Change Ownership on folders:
+    sudo chown -R snort:snort /etc/snort
+    sudo chown -R snort:snort /var/log/snort
+    sudo chown -R snort:snort /usr/local/lib/snort_dynamicrules
+    ```
+
 - 
