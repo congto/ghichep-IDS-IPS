@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-functions.sh
+source functions.sh
 
 echocolor "Installing package"
 sleep 3
