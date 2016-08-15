@@ -1,13 +1,14 @@
 #!/bin/bash 
 
+functions.sh
 
-echo "Installing package"
+echocolor "Installing package"
 sleep 3
 sudo apt-get install -y build-essential libpcap-dev \
     libpcre3-dev libdumbnet-dev bison flex zlib1g-dev liblzma-dev openssl libssl-dev    
 sudo apt-get install -y ethtool
 
-echo "Config network"
+echocolor "Config network"
 sleep 3
 cp /etc/network/interfaces /etc/network/interfaces.orig
 cat << EOF > /etc/network/interfaces
@@ -29,7 +30,7 @@ iface eth1 inet dhcp
 EOF
 
 
-echo "Restart networking service"
+echocolor "Restart networking service"
 sleep 3
 ifdown -a && ifup -a 
 
@@ -38,12 +39,12 @@ sleep 3
 ethtool -k eth0 | grep receive-offload
 
 
-echo "Make folder install Snort"
+echocolor "Make folder install Snort"
 sleep 3
 mkdir ~/snort_src
 cd ~/snort_src
 
-echo "Download DAQ package"
+echocolor "Download DAQ package"
 sleep 3
 cd ~/snort_src
 wget https://www.snort.org/downloads/snort/daq-2.0.6.tar.gz
@@ -53,21 +54,21 @@ cd daq-2.0.6
 make
 sudo make install
 
-echo "Download Snort package"
+echocolor "Download Snort package"
 sleep 3
 cd ~/snort_src
-wget https://snort.org/downloads/snort/snort-2.9.8.0.tar.gz
-tar -xvzf snort-2.9.8.0.tar.gz
-cd snort-2.9.8.0
+wget https://snort.org/downloads/snort/snort-2.9.8.3.tar.gz
+tar -xvzf snort-2.9.8.3.tar.gz
+cd snort-2.9.8.3
 ./configure --enable-sourcefire
 make
 sudo make install
 
-echo "Config snort"
+echocolor "Config snort"
 sleep 3
 sudo ldconfig
 sudo ln -s /usr/local/bin/snort /usr/sbin/snort
 
-echo "Check version snort"
+echocolor "Check version snort"
 sleep 3
 snort -V
