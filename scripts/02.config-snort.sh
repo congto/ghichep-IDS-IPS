@@ -11,6 +11,7 @@ sudo useradd snort -r -s /sbin/nologin -c SNORT_IDS -g snort
 
 
 echocolor "Creat folder for Snort"
+sleep 3
 # Create the Snort directories:
 sudo mkdir /etc/snort
 sudo mkdir /etc/snort/rules
@@ -76,7 +77,6 @@ sleep 3
 cat <<EOF > /etc/snort/rules/local.rules
 alert icmp any any -> \$HOME_NET any (msg:"ICMP test detected"; GID:1; sid:10000001; rev:001; classtype:icmp-event;)
 EOF
-
 
 echocolor "Test the configuration file again"
 sudo snort -T -c /etc/snort/snort.conf -i eth0
